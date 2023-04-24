@@ -1,14 +1,14 @@
-# Strapi plugin random-sort
+# Strapi random-sort
 
 Plugin to randomly sort the data of a request.
 
 ## Installation
 
-`npm install strapi-plugin-random-sort`
+`npm install strapi-random-sort`
 
 or
 
-`yarn add strapi-plugin-random-sort`
+`yarn add strapi-random-sort`
 
 ## Config
 
