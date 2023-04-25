@@ -9,6 +9,9 @@
     "displayName": "Random Sort"
   },
   "dependencies": {},
+  "peerDependencies": {
+    "@strapi/strapi": "^4.4.0"
+  },
   "author": {
     "name": "Muhammad Bilal"
   },
