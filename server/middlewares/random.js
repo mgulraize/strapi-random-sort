@@ -1,7 +1,7 @@
 module.exports = async (ctx, next) => {
-  // console.log("ctx", ctx);
+
   await next();
-  // console.log("ctx after next", ctx.body.data);
+
   // only if query param random=true from ctx.request.url
   //parse url
   const queryParams = ctx?.request?.url?.split("?")[1]?.split("&");
@@ -9,7 +9,7 @@ module.exports = async (ctx, next) => {
     return;
   }
   if (queryParams.includes("random=true")) {
-    shuffleArray(ctx.body.data);
+    shuffleArray(ctx.body);
   }
   function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
