@@ -1,16 +1,32 @@
 module.exports = async (ctx, next) => {
-  // console.log("ctx", ctx);
-  await next();
-  // console.log("ctx after next", ctx.body.data);
-  // only if query param random=true from ctx.request.url
-  //parse url
-  const queryParams = ctx?.request?.url?.split("?")[1]?.split("&");
-  if (!queryParams) {
-    return;
+  try {
+    // Check if random sorting is requested - handle both URL and query object formats
+    const isRandomRequested =
+      ctx?.request?.url?.includes("random=true") ||
+      ctx?.query?.random === "true";
+
+    if (isRandomRequested) {
+      // Use Strapi v4's official way to get all results
+      ctx.query = {
+        ...ctx.query,
+        pagination: {
+          pageSize: -1, // -1 means all results in Strapi v4
+          page: 1,
+        },
+      };
+    }
+
+    await next();
+
+    if (isRandomRequested && ctx.body?.data) {
+      shuffleArray(ctx.body.data);
+    }
+  } catch (error) {
+    console.error("Error in random sort middleware:", error);
+    // Continue with the request even if there's an error
+    await next();
   }
-  if (queryParams.includes("random=true")) {
-    shuffleArray(ctx.body.data);
-  }
+
   function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

@@ -1,6 +1,6 @@
 {
   "name": "strapi-random-sort",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Randomly sort the content of a collection",
   "strapi": {
     "name": "random-sort",
