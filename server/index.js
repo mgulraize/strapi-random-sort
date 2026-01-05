@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * Strapi v4 compatible entry point
+ */
 const register = require('./register');
 const bootstrap = require('./bootstrap');
 const destroy = require('./destroy');

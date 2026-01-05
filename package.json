@@ -1,6 +1,6 @@
 {
   "name": "strapi-random-sort",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "description": "Randomly sort the content of a collection",
   "strapi": {
     "name": "random-sort",
@@ -8,18 +8,46 @@
     "kind": "plugin",
     "displayName": "Random Sort"
   },
-  "dependencies": {},
+  "type": "commonjs",
+  "exports": {
+    "./strapi-server": {
+      "types": "./dist/server/index.d.ts",
+      "source": "./server/src/index.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "strapi-server.js"
+  ],
+  "scripts": {
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "verify": "strapi-plugin verify"
+  },
+  "devDependencies": {
+    "@strapi/sdk-plugin": "^5.4.0",
+    "@strapi/strapi": "^4.4.0 || ^5.6.0",
+    "@types/koa": "^3.0.1",
+    "@types/node": "^25.0.3",
+    "typescript": "^5.0.0"
+  },
   "peerDependencies": {
-    "@strapi/strapi": "^4.4.0"
+    "@strapi/strapi": "^5.0.0"
   },
   "author": {
     "name": "Muhammad Bilal"
   },
-  "maintainers": [{
-    "name": "Muhammad Bilal"
-  }],
+  "maintainers": [
+    {
+      "name": "Muhammad Bilal"
+    }
+  ],
   "engines": {
-    "node": ">=12.x.x",
+    "node": ">=18.x.x",
     "npm": ">=6.0.0"
   },
   "license": "MIT"

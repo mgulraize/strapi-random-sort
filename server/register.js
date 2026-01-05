@@ -1,6 +1,11 @@
-"use strict";
-const middlewares = require("./middlewares");
+'use strict';
+
+const middlewares = require('./middlewares');
+
+/**
+ * Strapi v4 register hook
+ */
 module.exports = ({ strapi }) => {
-  // registeration phase
+  // Register the random sort middleware globally
   strapi.server.use(middlewares.random);
 };
