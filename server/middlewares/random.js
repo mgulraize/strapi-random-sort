@@ -83,27 +83,45 @@ module.exports = async (ctx, next) => {
     await next();
 
     if (isRandomRequested && ctx.body?.data) {
-      // Shuffle all records
-      const shuffledData = shuffleArray(ctx.body.data);
+      if (Array.isArray(ctx.body.data)) {
+        // REST response: data is a flat array. Shuffle, then paginate to
+        // the page/pageSize the caller originally asked for.
+        const shuffledData = shuffleArray(ctx.body.data);
 
-      // Paginate the shuffled array
-      const page = ctx.state._randomSortRequestedPage || 1;
-      const pageSize = ctx.state._randomSortRequestedPageSize || 10;
-      const total = shuffledData.length;
-      const pageCount = Math.ceil(total / pageSize);
+        const page = ctx.state._randomSortRequestedPage || 1;
+        const pageSize = ctx.state._randomSortRequestedPageSize || 10;
+        const total = shuffledData.length;
+        const pageCount = Math.ceil(total / pageSize);
 
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      ctx.body.data = shuffledData.slice(start, end);
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        ctx.body.data = shuffledData.slice(start, end);
 
-      // Update meta.pagination
-      if (ctx.body.meta && ctx.body.meta.pagination) {
-        ctx.body.meta.pagination = {
-          page,
-          pageSize,
-          pageCount,
-          total,
-        };
+        if (ctx.body.meta && ctx.body.meta.pagination) {
+          ctx.body.meta.pagination = {
+            page,
+            pageSize,
+            pageCount,
+            total,
+          };
+        }
+      } else if (typeof ctx.body.data === 'object') {
+        // GraphQL response: data is an object keyed by query/operation name,
+        // e.g. `{ restaurants: [...] }` (default flattened v5 format) or
+        // `{ restaurants_connection: { data: [...], meta: {...} } }`
+        // (Relay-style `_connection` variant). GraphQL resolves its own
+        // pagination from the query/variables, which this middleware can't
+        // see at the Koa layer, so there's no "fetch everything, then
+        // repaginate" pass here - this only shuffles whatever page GraphQL
+        // already returned.
+        for (const key of Object.keys(ctx.body.data)) {
+          const value = ctx.body.data[key];
+          if (Array.isArray(value)) {
+            ctx.body.data[key] = shuffleArray(value);
+          } else if (value && typeof value === 'object' && Array.isArray(value.data)) {
+            value.data = shuffleArray(value.data);
+          }
+        }
       }
     }
   } catch (error) {

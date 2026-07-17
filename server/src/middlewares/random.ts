@@ -6,7 +6,7 @@ interface PaginationState {
 }
 
 interface StrapiResponseBody {
-    data?: unknown[];
+    data?: unknown[] | Record<string, unknown>;
     meta?: {
         pagination?: {
             page: number;
@@ -104,27 +104,23 @@ function cleanUrlQueryString(ctx: RandomSortContext): void {
 }
 
 /**
- * Apply random sorting and pagination to response data
+ * Shuffle+paginate a REST-style response, where body.data is the flat
+ * array of records and body.meta.pagination (if present) tracks totals.
  */
-function applyRandomPagination(
-    ctx: RandomSortContext,
+function applyRestRandomPagination(
+    body: StrapiResponseBody,
+    data: unknown[],
     page: number,
     pageSize: number
 ): void {
-    const body = ctx.body as StrapiResponseBody | undefined;
-    if (!body?.data || !Array.isArray(body.data)) return;
-
-    // Shuffle all records
-    const shuffledData = shuffleArray(body.data);
+    const shuffledData = shuffleArray(data);
     const total = shuffledData.length;
     const pageCount = Math.ceil(total / pageSize);
 
-    // Paginate the shuffled array
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
     body.data = shuffledData.slice(start, end);
 
-    // Update pagination metadata
     if (body.meta?.pagination) {
         body.meta.pagination = {
             page,
@@ -132,6 +128,57 @@ function applyRandomPagination(
             pageCount,
             total,
         };
+    }
+}
+
+/**
+ * Shuffle a GraphQL-style response, where body.data is an object keyed by
+ * query/operation name (e.g. `{ restaurants: [...] }` for the default
+ * flattened Strapi v5 format, or `{ restaurants_connection: { data: [...],
+ * meta: {...} } }` for the Relay-style `_connection` variant).
+ *
+ * Unlike REST, GraphQL resolves its own pagination arguments from the
+ * query/variables in the request body, which this middleware has no access
+ * to at the Koa layer. So there's no way to force a "fetch everything, then
+ * repaginate" pass here — this only shuffles the order of whatever page
+ * GraphQL already returned. Callers that want randomness across the full
+ * dataset need to request a large pageSize in the GraphQL query itself.
+ */
+function applyGraphQLShuffle(dataObj: Record<string, unknown>): void {
+    for (const key of Object.keys(dataObj)) {
+        const value = dataObj[key];
+        if (Array.isArray(value)) {
+            dataObj[key] = shuffleArray(value);
+        } else if (
+            value &&
+            typeof value === 'object' &&
+            Array.isArray((value as { data?: unknown }).data)
+        ) {
+            (value as { data: unknown[] }).data = shuffleArray(
+                (value as { data: unknown[] }).data
+            );
+        }
+    }
+}
+
+/**
+ * Apply random sorting (and, for REST, pagination) to response data.
+ */
+function applyRandomPagination(
+    ctx: RandomSortContext,
+    page: number,
+    pageSize: number
+): void {
+    const body = ctx.body as StrapiResponseBody | undefined;
+    if (!body?.data) return;
+
+    if (Array.isArray(body.data)) {
+        applyRestRandomPagination(body, body.data, page, pageSize);
+        return;
+    }
+
+    if (typeof body.data === 'object') {
+        applyGraphQLShuffle(body.data as Record<string, unknown>);
     }
 }
 
